@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "887562664837",
+    "project_id": "pikmark-322df",
+    "storage_bucket": "pikmark-322df.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:887562664837:android:13aacf4ab3451e9ba922ec",
+        "android_client_info": {
+          "package_name": "com.example.proyectofinal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCitz8xxXRetInTEKoi2VaKXBADnFAoWcs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

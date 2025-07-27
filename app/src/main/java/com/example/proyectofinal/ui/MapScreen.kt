@@ -4,6 +4,9 @@ import android.Manifest
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
 import android.location.Geocoder
 import android.location.Location
@@ -49,6 +52,8 @@ import coil.request.ImageRequest
 import com.example.proyectofinal.R
 import com.google.accompanist.permissions.*
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -63,6 +68,7 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
+import android.graphics.Canvas as AndroidCanvas
 
 // JSON con el estilo para el mapa oscuro.
 private const val darkMapStyleJson = """
@@ -87,6 +93,48 @@ private const val darkMapStyleJson = """
   { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [ { "color": "#17263c" } ] }
 ]
 """
+
+// MODIFICADO: Función mejorada para crear el ícono con fondo y borde, y con manejo de errores.
+private fun bitmapDescriptorFromPng(
+    context: Context,
+    resId: Int,
+    size: Int
+): BitmapDescriptor? {
+    return try {
+        val originalBitmap = BitmapFactory.decodeResource(context.resources, resId)
+            ?: throw IllegalArgumentException("El recurso no se encontró o no se pudo decodificar: $resId")
+
+        val finalBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = AndroidCanvas(finalBitmap)
+
+        val paint = Paint().apply {
+            isAntiAlias = true
+        }
+
+        // Dibuja una sombra/borde exterior oscuro para el contraste
+        paint.color = android.graphics.Color.parseColor("#44000000") // Sombra semitransparente
+        canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
+
+        // Dibuja el círculo de fondo blanco sobre la sombra
+        paint.color = android.graphics.Color.WHITE
+        val backgroundRadius = size / 2f * 0.95f // Un poco más pequeño que la sombra
+        canvas.drawCircle(size / 2f, size / 2f, backgroundRadius, paint)
+
+        // Dibuja el ícono escalado sobre el círculo
+        val iconSize = (size * 0.70).toInt() // El ícono ocupa el 70% del espacio
+        val iconMargin = (size - iconSize) / 2
+        val destinationRect = android.graphics.Rect(iconMargin, iconMargin, iconMargin + iconSize, iconMargin + iconSize)
+        canvas.drawBitmap(originalBitmap, null, destinationRect, null)
+
+        BitmapDescriptorFactory.fromBitmap(finalBitmap)
+    } catch (e: Exception) {
+        Log.e("MapScreen", "Error al crear el descriptor de bitmap desde el PNG. Asegúrate que 'R.drawable.icon' existe y es un PNG válido.", e)
+        // Muestra un mensaje al usuario si el ícono falla, en lugar de cerrar la app.
+        Toast.makeText(context, "No se pudo cargar el ícono personalizado del mapa.", Toast.LENGTH_SHORT).show()
+        null
+    }
+}
+
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -156,6 +204,12 @@ fun MapScreen(auth: FirebaseAuth = FirebaseAuth.getInstance()) {
             mapStyleOptions = if (isMapDark) MapStyleOptions(darkMapStyleJson) else null
         )
 
+        val density = LocalContext.current.resources.displayMetrics.density
+        val markerIcon = remember {
+            val size = (48 * density).toInt() // 48dp convertidos a píxeles para un mejor tamaño
+            bitmapDescriptorFromPng(context, R.drawable.icon, size)
+        }
+
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
@@ -167,6 +221,7 @@ fun MapScreen(auth: FirebaseAuth = FirebaseAuth.getInstance()) {
                     state = MarkerState(position = LatLng(recuerdo.latitud, recuerdo.longitud)),
                     title = recuerdo.nota.take(25),
                     snippet = recuerdo.timestamp.toDate().toString(),
+                    icon = markerIcon, // Se usa el ícono personalizado
                     onClick = {
                         val relacionados = recuerdos.filter {
                             distanciaMetros(it.latitud, it.longitud, recuerdo.latitud, recuerdo.longitud) <= 500
@@ -183,7 +238,6 @@ fun MapScreen(auth: FirebaseAuth = FirebaseAuth.getInstance()) {
             }
         }
 
-        // MODIFICADO: Se añade un fondo a la fila de filtros para que resalten
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)

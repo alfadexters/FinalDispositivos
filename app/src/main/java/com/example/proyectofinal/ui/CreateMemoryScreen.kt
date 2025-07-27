@@ -259,9 +259,9 @@ suspend fun mejorarNotaConGemini(textoOriginal: String, ciudad: String?): String
     val ubicacionTexto = ciudad?.let { "Lugar aproximado: $it" } ?: ""
 
     val prompt = """
-        Mejora ligeramente esta nota para que sea más clara y un poco más descriptiva.
+        Mejora esta nota para que sea más clara y un poco más descriptiva.
         Puedes incluir una pequeña referencia al lugar si encaja naturalmente.
-        No seas poético ni emocional, dame una sola respuesta que exprese todo lo que digo en la nota.
+        No seas poético, dame una sola respuesta que exprese todo lo que digo en la nota.
         
         $ubicacionTexto
         

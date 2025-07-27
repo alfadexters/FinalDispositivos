@@ -110,6 +110,8 @@ fun CreateMemoryScreen(
             .fillMaxSize()
             .padding(24.dp)
     ) {
+        Spacer(modifier = Modifier.height(80.dp))
+
         Text("Nuevo Recuerdo", style = MaterialTheme.typography.headlineSmall)
 
         Spacer(modifier = Modifier.height(16.dp))
